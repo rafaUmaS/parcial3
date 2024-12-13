@@ -10,7 +10,9 @@ async function fetchMovies():Promise<unknown[]>{
       await client.connect();
   
       // Realizar la solicitud a tu API para obtener las películas
-      const res = await fetch(`http://localhost:3000/api/movies`);
+      //local / dep
+      //const res = await fetch(`http://localhost:3000/api/movies`);
+      const res = await fetch(`https://parcial3-mu.vercel.app/api/movies`);
       const movies = await res.json();
       return movies;
     } catch (error) {
