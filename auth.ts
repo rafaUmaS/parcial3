@@ -2,41 +2,43 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import client from "@/lib/mongodb"
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+  ],
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
-        // Verifica los datos del usuario
-        console.log("Datos del usuario:", user);
-
-        // Conectar a la base de datos y obtener la colección
-        const db = client.db("parcial2");  // Nombre de tu base de datos
-        const collection = db.collection("logInfo");  // Nombre de la colección
+        console.log("User Data:", user);
+        console.log("Account Data:", account); // Check account data
+        console.log("Profile Data:", profile); // Check profile data
         
-        // Asegúrate de que el usuario tenga la información que deseas guardar
+        // MongoDB insertion logic
+        const db = client.db("parcial2");
+        const collection = db.collection("logInfo");
+        
         const logInfo = {
           email: user.email,
           name: user.name,
-          timestamp: new Date(), // Guardamos la fecha y hora del inicio de sesión
+          timestamp: new Date(),
         };
-
-        // Insertar los datos en la colección
+    
         await collection.insertOne(logInfo);
-
-        console.log('Información del log insertada correctamente');
+        console.log('Log inserted successfully');
         
-        // Retorna true si la inserción fue exitosa
         return true;
       } catch (error) {
-        console.error('Error al guardar la información del log:', error);
-        
-        // Retorna false si algo salió mal
+        console.error('Error during sign-in callback:', error);
         return false;
       }
     },
     async jwt({ token, account, user }) {
       if (account && user) {
-        token.email = user.email; // Guardamos el email del usuario en el token
+        token.email = user.email; // Store the user's email
+        token.accessToken = account.access_token; // Store access token for API calls
+        token.expiresAt = account.expires_at; // Store expiry date of the token
       }
       return token;
     },
