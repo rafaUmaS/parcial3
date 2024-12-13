@@ -36,9 +36,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return false;
       }
     },
-    async redirect({ url, baseUrl }) {
-      return "/secret/perfil"; // redirige a la URL correcta
-    },
   },
   
 });
