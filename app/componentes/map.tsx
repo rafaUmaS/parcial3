@@ -1,72 +1,75 @@
-"use client"
-import React, { useState, FormEvent } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Tipo para una parada
-interface Stop {
+const defaultZoom = 13;
+const defaultPosition = { lat: 36.721261, lng: -4.4212655 }; // Posición inicial (por ejemplo, Málaga)
+
+// Definimos un tipo para los marcadores
+interface MarkerType {
   lat: number;
   lng: number;
   nombre: string;
 }
 
-// Props opcionales para el mapa
-interface MapProps {
-  defaultZoom?: number;
-  posix?: { lat: number; lng: number };
-}
+export default function MapaConFormulario(): JSX.Element {
+  const [pais, setPais] = useState<string>(''); // Estado para el país
+  const [ciudad, setCiudad] = useState<string>(''); // Estado para la ciudad
+  const [markers, setMarkers] = useState<MarkerType[]>([]); // Estado para los marcadores
+  const [posix, setPosix] = useState<{ lat: number; lng: number }>(defaultPosition); // Estado para la posición actual del mapa
 
-const Map: React.FC<MapProps> = ({
-  defaultZoom = 15,
-  posix = { lat: 36.7213, lng: -4.4216 },
-}) => {
-  // Estado para los marcadores
-  const [markers, setMarkers] = useState<Stop[]>([]);
-
-  // Manejar el formulario
-  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-    const linea = formData.get('linea') as string;
-    const sentido = formData.get('sentido') as string;
+    try {
+      // Llama a la API de OpenStreetMap para obtener las coordenadas
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          ciudad
+        )},${encodeURIComponent(pais)}`
+      );
+      const data: { lat: string; lon: string }[] = await response.json();
 
-    // Obtener las paradas (datos simulados)
-    const paradas = getParadas(linea, sentido);
-    setMarkers(paradas);
-  };
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
 
-  // Ejemplo de función para obtener paradas de una línea y sentido
-  const getParadas = (linea: string, sentido: string): Stop[] => {
-    // Datos simulados de paradas
-    const datos: Record<string, Record<string, Stop[]>> = {
-      linea1: {
-        ida: [
-          { lat: 36.7213, lng: -4.4216, nombre: 'Parada 1' },
-          { lat: 36.7223, lng: -4.4226, nombre: 'Parada 2' },
-          { lat: 36.7233, lng: -4.4236, nombre: 'Parada 3' },
-        ],
-        vuelta: [
-          { lat: 36.7243, lng: -4.4246, nombre: 'Parada A' },
-          { lat: 36.7253, lng: -4.4256, nombre: 'Parada B' },
-          { lat: 36.7263, lng: -4.4266, nombre: 'Parada C' },
-        ],
-      },
-      linea2: {
-        ida: [
-          { lat: 36.7313, lng: -4.4316, nombre: 'Parada X' },
-          { lat: 36.7323, lng: -4.4326, nombre: 'Parada Y' },
-          { lat: 36.7333, lng: -4.4336, nombre: 'Parada Z' },
-        ],
-        vuelta: [
-          { lat: 36.7343, lng: -4.4346, nombre: 'Parada L' },
-          { lat: 36.7353, lng: -4.4356, nombre: 'Parada M' },
-          { lat: 36.7363, lng: -4.4366, nombre: 'Parada N' },
-        ],
-      },
-    };
+        // Añade el nuevo marcador al estado
+        setMarkers((prevMarkers) => [
+          ...prevMarkers,
+          { lat: parseFloat(lat), lng: parseFloat(lon), nombre: `${ciudad}, ${pais}` },
+        ]);
 
-    return datos[linea]?.[sentido] || [];
+        // Actualiza la posición del mapa para centrar en el nuevo marcador
+        setPosix({ lat: parseFloat(lat), lng: parseFloat(lon) });
+
+        // Resetea los campos del formulario
+        setPais('');
+        setCiudad('');
+        const postResponse = await fetch('/api/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
+            email: 'rafasaezarana@uma.es', // Correo fijo para este ejemplo
+          }),
+        });
+
+        const result = await postResponse.json();
+
+        if (!postResponse.ok) {
+          throw new Error(result.error || 'Error desconocido');
+        }
+
+        console.log(result.message);
+      } else {
+        alert('No se encontraron coordenadas para esa ubicación.');
+      }
+    } catch (error) {
+      console.error('Error al buscar coordenadas:', error);
+    }
   };
 
   return (
@@ -74,20 +77,30 @@ const Map: React.FC<MapProps> = ({
       {/* Formulario */}
       <form onSubmit={handleFormSubmit} style={{ marginBottom: '1rem' }}>
         <label>
-          Línea:
-          <select name="linea" required>
-            <option value="linea1">Línea 1</option>
-            <option value="linea2">Línea 2</option>
-          </select>
+          País:
+          <input
+            type="text"
+            value={pais}
+            onChange={(e) => setPais(e.target.value)} // Actualiza el estado del país
+            placeholder="Introduce el país"
+            style={{ marginLeft: '0.5rem', marginBottom: '0.5rem' }}
+          />
         </label>
+        <br />
         <label>
-          Sentido:
-          <select name="sentido" required>
-            <option value="ida">Ida</option>
-            <option value="vuelta">Vuelta</option>
-          </select>
+          Ciudad:
+          <input
+            type="text"
+            value={ciudad}
+            onChange={(e) => setCiudad(e.target.value)} // Actualiza el estado de la ciudad
+            placeholder="Introduce la ciudad"
+            style={{ marginLeft: '0.5rem' }}
+          />
         </label>
-        <button type="submit">Mostrar paradas</button>
+        <br />
+        <button type="submit" style={{ marginTop: '1rem' }}>
+          Añadir marcador
+        </button>
       </form>
 
       {/* Mapa */}
@@ -109,6 +122,4 @@ const Map: React.FC<MapProps> = ({
       </MapContainer>
     </div>
   );
-};
-
-export default Map;
+}
