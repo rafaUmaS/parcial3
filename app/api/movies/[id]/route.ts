@@ -1,14 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     // Extraer el `id` dinámico de los parámetros de la ruta
-    const { id } = params;
+    const { id } = context.params; // Ajuste aquí para usar `context.params`
     const objectId = new ObjectId(id);
 
-    const client = clientPromise;
+    const client = await clientPromise;
     const db = client.db("sample_mflix");
 
     // Buscar el detalle de la película basada en el `id`
