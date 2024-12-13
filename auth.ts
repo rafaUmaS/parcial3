@@ -7,7 +7,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+    
   ],
+  debug: true,
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
