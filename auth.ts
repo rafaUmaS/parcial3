@@ -37,7 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
     async redirect({ url, baseUrl }) {
-      return "/api/auth/callback/google"; // redirige a la URL correcta
+      return "/secret/perfil"; // redirige a la URL correcta
     },
   },
   
