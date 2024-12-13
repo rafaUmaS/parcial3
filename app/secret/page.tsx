@@ -1,9 +1,9 @@
 import {auth} from "@/auth";
 import client from "@/lib/mongodb";
-import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
 import Nav from "../componentes/nav";
 import { redirect } from "next/navigation";
 import Cloudinary from "../componentes/cloudinary";
+import Map from "./../componentes/map";
 async function fetchMovies():Promise<unknown[]>{
     try {
       // Conectar a MongoDB si es necesario
@@ -11,8 +11,8 @@ async function fetchMovies():Promise<unknown[]>{
   
       // Realizar la solicitud a tu API para obtener las películas
       //local / dep
-      //const res = await fetch(`http://localhost:3000/api/movies`);
-      const res = await fetch(`https://parcial3-mu.vercel.app/api/movies`);
+      const res = await fetch(`http://localhost:3000/api/movies`);
+      //const res = await fetch(`https://parcial3-mu.vercel.app/api/movies`);
       const movies = await res.json();
       return movies;
     } catch (error) {
@@ -28,7 +28,6 @@ export default async function Home(){
     redirect('/')
   }
   const user = session?.user;
-  
   return (
     <main>
       <Nav></Nav>
@@ -49,6 +48,9 @@ export default async function Home(){
         <h2>Foto de cloudinary</h2>
         <Cloudinary id="cld-sample-5"></Cloudinary>
       </div>
+      <div className="bg-white-700 mx-auto my-5 w-[98%] h-[480px]">
+        <Map posix={{ lat: 36.7213, lng: -4.4216 }}  />
+        </div> 
     </main>
   )
 };

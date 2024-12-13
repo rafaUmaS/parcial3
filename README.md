@@ -87,3 +87,6 @@ En .env.local tenemos las credenciales del cliente de google
 en app/login está la página del login 
 # Images
 npm install next-cloudinary
+
+# Cambiar para dep
+/secret
