@@ -36,14 +36,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return false;
       }
     },
-    async jwt({ token, account, user }) {
-      if (account && user) {
-        token.email = user.email; // Store the user's email
-        token.accessToken = account.access_token; // Store access token for API calls
-        token.expiresAt = account.expires_at; // Store expiry date of the token
-      }
-      return token;
-    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
